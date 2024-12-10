@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>门诊全麻预约系统</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: "Microsoft YaHei", "微软雅黑", sans-serif;
+            margin: 20px;
+            padding-top: 100px;
+        }
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 10px 20px;
+            z-index: 2;
+            border-bottom: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .add-appointment {
+            flex: 0 0 300px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            position: fixed;
+            top: 100px;
+            left: 20px;
+            width: 300px;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .schedule-view {
+            flex: 1;
+            margin-left: 340px;
+            position: relative;
+            z-index: 1;
+        }
+        .table-container {
+            position: relative;
+            overflow: auto;
+            max-height: calc(100vh - 250px);
+        }
+        .header-table {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: white;
+            margin-bottom: -1px;
+        }
+        .content-table {
+            position: relative;
+        }
+        form div {
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input {
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        thead {
+            position: sticky;
+            top: 80px;
+            z-index: 10;
+            background: white;
+        }
+        th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 80px;
+            z-index: 10;
+            padding: 4px 8px;
+            text-align: center;
+        }
+        .date-header {
+            font-size: 0.8em;
+            color: #666;
+            display: block;
+            background-color: #f2f2f2;
+            margin-top: 4px;
+        }
+        .week-selector {
+            margin-bottom: 20px;
+        }
+        .week-navigation {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .week-navigation button {
+            width: auto;
+            padding: 5px 15px;
+        }
+        .week-navigation button:last-child {
+            margin-left: auto;
+        }
+        .appointment {
+            padding: 5px;
+            margin: 2px 0;
+            background-color: #e3f2fd;
+            border-radius: 3px;
+            font-size: 0.9em;
+            position: relative;
+        }
+        
+        .appointment div {
+            margin: 2px 0;
+        }
+        
+        td {
+            vertical-align: top;
+        }
+        
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #ddd;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+            border-radius: 3px;
+            padding: 5px 0;
+            z-index: 1000;
+            display: none;
+            min-width: 100px;
+        }
+        
+        .context-menu-item {
+            padding: 8px 15px;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .context-menu-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            position: relative;
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            width: 50%;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .close-modal {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        /* Footer styles */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+            border-top: 1px solid #ddd;
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>门诊全麻预约系统</h1>
+    </div>
+    
+    <div class="container">
+        <!-- Add Appointment Form -->
+        <div class="add-appointment">
+            <h2>添加预约</h2>
+            <form id="appointmentForm">
+                <div>
+                    <label>患者姓名：</label>
+                    <input type="text" name="patient_name" required>
+                </div>
+                <div>
+                    <label>诊断：</label>
+                    <input type="text" name="diagnosis">
+                </div>
+                <div>
+                    <label>联系电话：</label>
+                    <input type="tel" name="phone" required>
+                </div>
+                <div>
+                    <label>预约日期：</label>
+                    <input type="date" name="appointment_date" required>
+                </div>
+                <div>
+                    <label>医生：</label>
+                    <input type="text" name="doctor" required>
+                </div>
+                <button type="submit">保存预约</button>
+            </form>
+        </div>
+
+        <!-- Schedule View -->
+        <div class="schedule-view">
+            <h2>每周预约</h2>
+            <div class="week-selector">
+                <div class="week-navigation">
+                    <button onclick="changeWeek(-1)">上一周</button>
+                    <button onclick="changeWeek(1)">下一周</button>
+                    <button onclick="exportWeeklyAppointments()" style="margin-left: auto; background-color: #2196F3;">导出预约表</button>
+                </div>
+            </div>
+            <table id="scheduleTable">
+                <thead>
+                    <tr>
+                        <th>医生</th>
+                        <th>
+                            星期一
+                            <span class="date-header" id="date-1"></span>
+                        </th>
+                        <th>
+                            星期二
+                            <span class="date-header" id="date-2"></span>
+                        </th>
+                        <th>
+                            星期三
+                            <span class="date-header" id="date-3"></span>
+                        </th>
+                        <th>
+                            星期四
+                            <span class="date-header" id="date-4"></span>
+                        </th>
+                        <th>
+                            星期五
+                            <span class="date-header" id="date-5"></span>
+                        </th>
+                        <th>
+                            星期六
+                            <span class="date-header" id="date-6"></span>
+                        </th>
+                        <th>
+                            星期日
+                            <span class="date-header" id="date-7"></span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="scheduleBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="contextMenu" class="context-menu">
+        <div class="context-menu-item" onclick="editAppointment()">编辑预约</div>
+        <div class="context-menu-item" onclick="deleteAppointment()">删除预约</div>
+    </div>
+    
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeEditModal()">&times;</span>
+            <h2>编辑预约</h2>
+            <form id="editForm">
+                <input type="hidden" name="id">
+                <div>
+                    <label>患者姓名：</label>
+                    <input type="text" name="patient_name" required>
+                </div>
+                <div>
+                    <label>诊断：</label>
+                    <input type="text" name="diagnosis">
+                </div>
+                <div>
+                    <label>联系电话：</label>
+                    <input type="tel" name="phone" required>
+                </div>
+                <div>
+                    <label>预约日期：</label>
+                    <input type="date" name="appointment_date" required>
+                </div>
+                <div>
+                    <label>医生：</label>
+                    <input type="text" name="doctor" required>
+                </div>
+                <button type="submit">保存修改</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>© 2024 门诊全麻预约系统</p>
+        <p>Developed by GLM | contact:413982598</p>
+    </div>
+
+    <script>
+        // Initialize the current week's Monday date
+        let monday = new Date();
+        monday.setDate(monday.getDate() - monday.getDay() + 1); // Set to Monday
+        
+        // Update date headers
+        function updateDateHeaders(startDate) {
+            const date = new Date(startDate);
+            for (let i = 1; i <= 7; i++) {
+                const dateStr = date.toLocaleDateString('zh-CN', {
+                    month: 'numeric',
+                    day: 'numeric'
+                });
+                document.getElementById(`date-${i}`).textContent = dateStr;
+                date.setDate(date.getDate() + 1);
+            }
+        }
+        
+        // Global variable to store current appointment being edited
+        let currentAppointment = null;
+        
+        // Context menu functions
+        document.addEventListener('click', function() {
+            document.getElementById('contextMenu').style.display = 'none';
+        });
+        
+        function showContextMenu(e, appointment) {
+            e.preventDefault();
+            currentAppointment = appointment;
+            
+            const contextMenu = document.getElementById('contextMenu');
+            const rect = e.target.closest('.appointment').getBoundingClientRect();
+            contextMenu.style.display = 'block';
+            
+            // Position menu next to the appointment
+            const menuX = rect.right + 5; // 5px offset from appointment
+            const menuY = rect.top;
+            
+            // Check if menu would go off screen
+            const menu = contextMenu.getBoundingClientRect();
+            const windowWidth = window.innerWidth;
+            
+            if (menuX + menu.width > windowWidth) {
+                // Show menu on the left side if it would overflow
+                contextMenu.style.left = (rect.left - menu.width - 5) + 'px';
+            } else {
+                contextMenu.style.left = menuX + 'px';
+            }
+            
+            contextMenu.style.top = menuY + 'px';
+        }
+        
+        function editAppointment() {
+            if (!currentAppointment) return;
+            
+            const form = document.getElementById('editForm');
+            form.id.value = currentAppointment.id;
+            form.patient_name.value = currentAppointment.patient_name;
+            form.diagnosis.value = currentAppointment.diagnosis || '';
+            form.phone.value = currentAppointment.phone;
+            form.appointment_date.value = currentAppointment.appointment_date;
+            form.doctor.value = currentAppointment.doctor;
+            
+            document.getElementById('editModal').style.display = 'block';
+        }
+        
+        function deleteAppointment() {
+            if (!currentAppointment || !confirm('确定要删除这个预约吗？')) return;
+            
+            fetch(`/api/appointments/${currentAppointment.id}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    loadSchedule();
+                }
+            })
+            .catch(error => {
+                console.error('错误：', error);
+                alert('删除预约时出错');
+            });
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+        
+        // Edit form submission
+        document.getElementById('editForm').onsubmit = function(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            console.log('Submitting edit with data:', data);
+            
+            fetch(`/api/appointments/${data.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('预约修改成功！');
+                    closeEditModal();
+                    loadSchedule();
+                }
+            })
+            .catch(error => {
+                console.error('错误：', error);
+                alert('修改预约时出错');
+            });
+        };
+
+        // Modify the appointment creation in loadSchedule function
+        function createAppointmentDiv(apt) {
+            const aptDiv = document.createElement('div');
+            aptDiv.className = 'appointment';
+            aptDiv.innerHTML = `
+                <div>患者：${apt.patient_name}</div>
+                <div>诊断：${apt.diagnosis || ''}</div>
+                <div>电话：${apt.phone}</div>
+            `;
+            aptDiv.oncontextmenu = (e) => showContextMenu(e, {
+                id: apt.id,
+                patient_name: apt.patient_name,
+                diagnosis: apt.diagnosis,
+                phone: apt.phone,
+                appointment_date: apt.appointment_date,
+                doctor: apt.doctor
+            });
+            return aptDiv;
+        }
+
+        // Modified loadSchedule function
+        function loadSchedule() {
+            const startDate = monday.toISOString().split('T')[0];
+            
+            // Update date headers with monday
+            updateDateHeaders(monday);
+            
+            fetch(`/api/appointments?start_date=${startDate}`)
+                .then(response => response.json())
+                .then(appointments => {
+                    console.log('Received appointments:', appointments);
+                    const scheduleBody = document.getElementById('scheduleBody');
+                    scheduleBody.innerHTML = '';
+                    
+                    if (!appointments || appointments.length === 0) {
+                        console.log('No appointments found');
+                        return;
+                    }
+
+                    // Group appointments by doctor
+                    const doctorAppointments = {};
+                    appointments.forEach(apt => {
+                        console.log('Processing appointment:', apt);
+                        if (!doctorAppointments[apt.doctor]) {
+                            doctorAppointments[apt.doctor] = {
+                                doctor: apt.doctor,
+                                appointments: Array.from({length: 7}, () => [])
+                            };
+                        }
+                        
+                        const aptDate = new Date(apt.appointment_date);
+                        const dayIndex = (aptDate.getDay() + 6) % 7;
+                        
+                        // Add all appointment data
+                        doctorAppointments[apt.doctor].appointments[dayIndex].push({
+                            id: apt.id,
+                            patient_name: apt.patient_name,
+                            diagnosis: apt.diagnosis,
+                            phone: apt.phone,
+                            appointment_date: apt.appointment_date,
+                            doctor: apt.doctor
+                        });
+                    });
+                    
+                    console.log('Grouped appointments:', doctorAppointments);
+                    
+                    // Create rows for each doctor
+                    Object.values(doctorAppointments).forEach(doctorData => {
+                        const row = document.createElement('tr');
+                        
+                        // Add doctor name cell
+                        const doctorCell = document.createElement('td');
+                        doctorCell.textContent = doctorData.doctor;
+                        row.appendChild(doctorCell);
+                        
+                        // Add cells for each day
+                        doctorData.appointments.forEach(dayAppointments => {
+                            const dayCell = document.createElement('td');
+                            if (dayAppointments && dayAppointments.length > 0) {
+                                dayAppointments.forEach(apt => {
+                                    const aptDiv = createAppointmentDiv(apt);
+                                    dayCell.appendChild(aptDiv);
+                                });
+                            }
+                            row.appendChild(dayCell);
+                        });
+                        
+                        scheduleBody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('错误：', error);
+                    alert('加载排班表时出错');
+                });
+        }
+
+        // Week navigation function
+        function changeWeek(offset) {
+            monday.setDate(monday.getDate() + (offset * 7));
+            loadSchedule();
+        }
+
+        // Form submission handler
+        document.getElementById('appointmentForm').onsubmit = function(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            fetch('/api/appointments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('预约保存成功！');
+                    e.target.reset();
+                    loadSchedule(); // 添加预约后重新加载排班表
+                }
+            })
+            .catch(error => {
+                console.error('错误：', error);
+                alert('保存预约时出错');
+            });
+        };
+
+        // Call loadSchedule immediately to set initial dates
+        loadSchedule();
+
+        // Add this new function
+        function exportWeeklyAppointments() {
+            const startDate = monday.toISOString().split('T')[0];
+            const endDate = new Date(monday);
+            endDate.setDate(endDate.getDate() + 6);
+            const filename = `预约表_${startDate}_${endDate.toISOString().split('T')[0]}.csv`;
+            
+            // Create CSV header
+            let csvContent = '\ufeff'; // Add BOM for Chinese character support
+            csvContent += '医生,患者姓名,诊断,联系电话,预约日期\n';
+            
+            // Get all appointments from the table
+            const appointments = [];
+            document.querySelectorAll('.appointment').forEach(aptDiv => {
+                const doctor = aptDiv.closest('tr').querySelector('td').textContent;
+                const patientName = aptDiv.querySelector('div:nth-child(1)').textContent.replace('患者：', '');
+                const diagnosis = aptDiv.querySelector('div:nth-child(2)').textContent.replace('诊断：', '');
+                const phone = aptDiv.querySelector('div:nth-child(3)').textContent.replace('电话：', '');
+                const dateCell = aptDiv.closest('td');
+                const columnIndex = Array.from(dateCell.parentElement.children).indexOf(dateCell);
+                const appointmentDate = new Date(monday);
+                appointmentDate.setDate(appointmentDate.getDate() + columnIndex - 1);
+                
+                appointments.push({
+                    doctor,
+                    patientName,
+                    diagnosis,
+                    phone,
+                    appointmentDate: appointmentDate.toISOString().split('T')[0]
+                });
+            });
+            
+            // Sort appointments by date and doctor
+            appointments.sort((a, b) => {
+                if (a.appointmentDate === b.appointmentDate) {
+                    return a.doctor.localeCompare(b.doctor);
+                }
+                return a.appointmentDate.localeCompare(b.appointmentDate);
+            });
+            
+            // Add appointments to CSV
+            appointments.forEach(apt => {
+                csvContent += `${apt.doctor},${apt.patientName},${apt.diagnosis},${apt.phone},${apt.appointmentDate}\n`;
+            });
+            
+            // Create and trigger download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Add this to your existing JavaScript
+        document.querySelector('.table-container').addEventListener('scroll', function(e) {
+            document.querySelector('.header-table').style.transform = 
+                `translateX(-${e.target.scrollLeft}px)`;
+        });
+
+        // Close context menu when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.context-menu') && !e.target.closest('.appointment')) {
+                document.getElementById('contextMenu').style.display = 'none';
+            }
+        });
+
+        // Close context menu when scrolling
+        document.addEventListener('scroll', function() {
+            document.getElementById('contextMenu').style.display = 'none';
+        }, true);
+    </script>
+</body>
+</html> 

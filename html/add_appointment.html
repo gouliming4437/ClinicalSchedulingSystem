@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Appointment</title>
+</head>
+<body>
+    <h1>Add New Appointment</h1>
+    <form id="appointmentForm">
+        <div>
+            <label>Patient Name:</label>
+            <input type="text" name="patient_name" required>
+        </div>
+        <div>
+            <label>Diagnosis:</label>
+            <input type="text" name="diagnosis">
+        </div>
+        <div>
+            <label>Phone:</label>
+            <input type="tel" name="phone" required>
+        </div>
+        <div>
+            <label>Appointment Date:</label>
+            <input type="date" name="appointment_date" required>
+        </div>
+        <div>
+            <label>Doctor:</label>
+            <input type="text" name="doctor" required>
+        </div>
+        <button type="submit">Save Appointment</button>
+    </form>
+
+    <script>
+        document.getElementById('appointmentForm').onsubmit = function(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            fetch('/api/appointments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Appointment saved successfully!');
+                    e.target.reset();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error saving appointment');
+            });
+        };
+    </script>
+</body>
+</html> 

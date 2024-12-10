@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Schedule</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Weekly Schedule</h1>
+    <div>
+        <label>Week Starting:</label>
+        <input type="date" id="weekStart" onchange="loadSchedule()">
+    </div>
+    <table id="scheduleTable">
+        <thead>
+            <tr>
+                <th>Doctor</th>
+                <th>Monday</th>
+                <th>Tuesday</th>
+                <th>Wednesday</th>
+                <th>Thursday</th>
+                <th>Friday</th>
+                <th>Saturday</th>
+                <th>Sunday</th>
+            </tr>
+        </thead>
+        <tbody id="scheduleBody">
+        </tbody>
+    </table>
+
+    <script>
+        function loadSchedule() {
+            const startDate = document.getElementById('weekStart').value;
+            fetch(`/api/appointments?start_date=${startDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Update the table with the appointments data
+                    const scheduleBody = document.getElementById('scheduleBody');
+                    scheduleBody.innerHTML = ''; // Clear existing data
+                    
+                    // Process and display the data
+                    // You'll need to implement this part based on your data structure
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error loading schedule');
+                });
+        }
+
+        // Set default date to current week's Monday
+        const today = new Date();
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - today.getDay() + 1);
+        document.getElementById('weekStart').value = monday.toISOString().split('T')[0];
+        loadSchedule();
+    </script>
+</body>
+</html> 
