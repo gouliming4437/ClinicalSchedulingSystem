@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>门诊全麻预约系统</title>
     <meta charset="UTF-8">
+    <title>门诊全麻预约系统</title>
     <style>
         body {
             font-family: "Microsoft YaHei", "微软雅黑", sans-serif;
@@ -238,6 +238,10 @@
                     <label>医生：</label>
                     <input type="text" name="doctor" required>
                 </div>
+                <div>
+                    <label>备注：</label>
+                    <input type="text" name="notes">
+                </div>
                 <button type="submit">保存预约</button>
             </form>
         </div>
@@ -325,6 +329,10 @@
                     <label>医生：</label>
                     <input type="text" name="doctor" required>
                 </div>
+                <div>
+                    <label>备注：</label>
+                    <input type="text" name="notes">
+                </div>
                 <button type="submit">保存修改</button>
             </form>
         </div>
@@ -398,6 +406,7 @@
             form.phone.value = currentAppointment.phone;
             form.appointment_date.value = currentAppointment.appointment_date;
             form.doctor.value = currentAppointment.doctor;
+            form.notes.value = currentAppointment.notes || '';
             
             document.getElementById('editModal').style.display = 'block';
         }
@@ -466,6 +475,7 @@
                 <div>患者：${apt.patient_name}</div>
                 <div>诊断：${apt.diagnosis || ''}</div>
                 <div>电话：${apt.phone}</div>
+                ${apt.notes ? `<div>备注：${apt.notes}</div>` : ''}
             `;
             aptDiv.oncontextmenu = (e) => showContextMenu(e, {
                 id: apt.id,
@@ -473,7 +483,8 @@
                 diagnosis: apt.diagnosis,
                 phone: apt.phone,
                 appointment_date: apt.appointment_date,
-                doctor: apt.doctor
+                doctor: apt.doctor,
+                notes: apt.notes
             });
             return aptDiv;
         }
@@ -518,7 +529,8 @@
                             diagnosis: apt.diagnosis,
                             phone: apt.phone,
                             appointment_date: apt.appointment_date,
-                            doctor: apt.doctor
+                            doctor: apt.doctor,
+                            notes: apt.notes
                         });
                     });
                     
@@ -566,6 +578,13 @@
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData.entries());
             
+            // Ensure notes is included in the data, even if empty
+            if (!data.notes) {
+                data.notes = '';
+            }
+            
+            console.log('Submitting appointment data:', data); // Add this for debugging
+            
             fetch('/api/appointments', {
                 method: 'POST',
                 headers: {
@@ -573,12 +592,17 @@
                 },
                 body: JSON.stringify(data)
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.status === 'success') {
                     alert('预约保存成功！');
                     e.target.reset();
-                    loadSchedule(); // 添加预约后重新加载排班表
+                    loadSchedule();
                 }
             })
             .catch(error => {

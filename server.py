@@ -70,14 +70,15 @@ class ClinicHandler(SimpleHTTPRequestHandler):
                 post_data = self.rfile.read(content_length)
                 appointment_data = json.loads(post_data.decode('utf-8'))
                 
-                print(f"Debug - Received appointment data: {appointment_data}")
+                print(f"Debug - Received appointment data: {appointment_data}")  # Debug log
                 
                 self.db.add_appointment(
                     patient_name=appointment_data['patient_name'],
                     diagnosis=appointment_data['diagnosis'],
                     phone=appointment_data['phone'],
                     appointment_date=appointment_data['appointment_date'],
-                    doctor=appointment_data['doctor']
+                    doctor=appointment_data['doctor'],
+                    notes=appointment_data.get('notes', '')
                 )
                 
                 self.send_response(200)
@@ -97,18 +98,15 @@ class ClinicHandler(SimpleHTTPRequestHandler):
                 post_data = self.rfile.read(content_length)
                 appointment_data = json.loads(post_data.decode('utf-8'))
                 
-                print(f"Debug - Updating appointment {appointment_id} with data:", appointment_data)
-                
                 self.db.update_appointment(
                     appointment_id,
                     patient_name=appointment_data['patient_name'],
                     diagnosis=appointment_data['diagnosis'],
                     phone=appointment_data['phone'],
                     appointment_date=appointment_data['appointment_date'],
-                    doctor=appointment_data['doctor']
+                    doctor=appointment_data['doctor'],
+                    notes=appointment_data.get('notes', '')
                 )
-                
-                print(f"Debug - Successfully updated appointment {appointment_id}")
                 
                 self.send_response(200)
                 self.send_header('Content-type', 'application/json')

@@ -16,7 +16,8 @@ class ClinicDatabase:
                         diagnosis TEXT,
                         phone TEXT,
                         appointment_date DATE,
-                        doctor TEXT
+                        doctor TEXT,
+                        notes TEXT
                     )
                 ''')
                 print("Database initialized successfully")
@@ -24,14 +25,14 @@ class ClinicDatabase:
             print(f"Error initializing database: {str(e)}")
             raise
     
-    def add_appointment(self, patient_name, diagnosis, phone, appointment_date, doctor):
+    def add_appointment(self, patient_name, diagnosis, phone, appointment_date, doctor, notes=''):
         try:
             with sqlite3.connect(self.db_file) as conn:
                 conn.execute('''
                     INSERT INTO appointments 
-                    (patient_name, diagnosis, phone, appointment_date, doctor)
-                    VALUES (?, ?, ?, ?, ?)
-                ''', (patient_name, diagnosis, phone, appointment_date, doctor))
+                    (patient_name, diagnosis, phone, appointment_date, doctor, notes)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (patient_name, diagnosis, phone, appointment_date, doctor, notes))
                 print(f"Added appointment: {patient_name} on {appointment_date}")
         except Exception as e:
             print(f"Error adding appointment: {str(e)}")
@@ -55,7 +56,8 @@ class ClinicDatabase:
                         'diagnosis': row['diagnosis'],
                         'phone': row['phone'],
                         'appointment_date': row['appointment_date'],
-                        'doctor': row['doctor']
+                        'doctor': row['doctor'],
+                        'notes': row['notes']
                     })
                 print(f"Retrieved {len(appointments)} appointments for week starting {start_date}")
                 return appointments
@@ -72,15 +74,15 @@ class ClinicDatabase:
             print(f"Error deleting appointment: {str(e)}")
             raise
     
-    def update_appointment(self, appointment_id, patient_name, diagnosis, phone, appointment_date, doctor):
+    def update_appointment(self, appointment_id, patient_name, diagnosis, phone, appointment_date, doctor, notes=''):
         try:
             with sqlite3.connect(self.db_file) as conn:
                 conn.execute('''
                     UPDATE appointments 
                     SET patient_name = ?, diagnosis = ?, phone = ?, 
-                        appointment_date = ?, doctor = ?
+                        appointment_date = ?, doctor = ?, notes = ?
                     WHERE id = ?
-                ''', (patient_name, diagnosis, phone, appointment_date, doctor, appointment_id))
+                ''', (patient_name, diagnosis, phone, appointment_date, doctor, notes, appointment_id))
                 print(f"Updated appointment with ID: {appointment_id}")
         except Exception as e:
             print(f"Error updating appointment: {str(e)}")
